@@ -75,12 +75,14 @@ WSGI_APPLICATION = 'nutriscan.wsgi.application'
 # ── Database ───────────────────────────────────────────────────────────────────
 # Development: SQLite (zero config)
 # Production:  set DB_ENGINE=django.db.backends.postgresql and fill DB_* vars
-DB_ENGINE = config('DB_ENGINE', default='django.db.backends.sqlite3')
+# Use SQLite when DB_ENGINE is blank/unset or explicitly set to sqlite3.
+# Set DB_ENGINE=django.db.backends.postgresql (and DB_NAME/USER/etc.) for production.
+DB_ENGINE = config('DB_ENGINE', default='').strip()
 
-if DB_ENGINE == 'django.db.backends.sqlite3':
+if not DB_ENGINE or DB_ENGINE == 'django.db.backends.sqlite3':
     DATABASES = {
         'default': {
-            'ENGINE': DB_ENGINE,
+            'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
