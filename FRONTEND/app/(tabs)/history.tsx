@@ -5,7 +5,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../../constants/ThemeContext';
-import { useProduct, mapOpenFoodFactsProduct } from '../../constants/ProductContext';
+// NOTE: This screen is a draft/reference — it is NOT mounted in the tab navigator.
+// The active history UI lives in app/(tabs)/index.tsx (backed by the backend API).
+// This file reads from AsyncStorage (the old local approach) and is kept for reference.
+import { useProduct } from '../../constants/ProductContext';
+
 import { useFocusEffect } from 'expo-router';
 
 interface HistoryEntry {
@@ -42,17 +46,7 @@ export default function HistoryScreen() {
   };
 
   const reopen = async (entry: HistoryEntry) => {
-    // Try to fetch fresh data from OFF
-    try {
-      const resp = await fetch(`https://world.openfoodfacts.org/api/v2/product/${entry.id}.json`);
-      const json = await resp.json();
-      if (json.status === 1 && json.product) {
-        setCurrentProduct(mapOpenFoodFactsProduct({ ...json.product, code: entry.id }));
-        router.push('/product-detail' as any);
-        return;
-      }
-    } catch {}
-    // Minimal fallback if no network
+    // This screen is a draft — use minimal fallback product data
     setCurrentProduct({
       id: entry.id,
       name: entry.name,
@@ -62,6 +56,7 @@ export default function HistoryScreen() {
     });
     router.push('/product-detail' as any);
   };
+
 
   const formatDate = (iso: string) => {
     const d = new Date(iso);

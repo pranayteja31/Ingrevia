@@ -8,10 +8,13 @@ import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../constants/AuthContext';
+import { useTheme } from '../constants/ThemeContext';
+import LogoBranding from '../components/LogoBranding';
 
 export default function RegisterScreen() {
   const router = useRouter();
   const { register } = useAuth();
+  const { colors, isDark } = useTheme();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -44,56 +47,58 @@ export default function RegisterScreen() {
   };
 
   return (
-    <SafeAreaView style={s.safe}>
-      <StatusBar style="light" backgroundColor="#0f0f0f" />
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.background} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-
+        <ScrollView
+          contentContainerStyle={[styles.scroll, { paddingHorizontal: 24 }]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
           {/* Back */}
-          <TouchableOpacity style={s.backBtn} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={20} color="#fff" />
+          <TouchableOpacity
+            style={[styles.backBtn, { backgroundColor: colors.card }]}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
           </TouchableOpacity>
 
-          {/* Logo */}
-          <View style={s.logoBlock}>
-            <View style={s.logoCircle}>
-              <Text style={s.logoEmoji}>🥬</Text>
-            </View>
-            <Text style={s.appName}>NutriScan</Text>
-            <Text style={s.tagline}>Scan Smarter. Eat Better.</Text>
+          {/* Shared logo block */}
+          <View style={styles.logoBlock}>
+            <LogoBranding size="sm" />
           </View>
 
           {/* Card */}
-          <View style={s.card}>
-            <Text style={s.cardTitle}>Create account</Text>
-            <Text style={s.cardSub}>Sign up to get started</Text>
+          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Create account</Text>
+            <Text style={[styles.cardSub, { color: colors.textSecondary }]}>Sign up to get started</Text>
 
             {error ? (
-              <View style={s.errorBox}>
-                <Ionicons name="alert-circle-outline" size={16} color="#EF4444" />
-                <Text style={s.errorText}>{error}</Text>
+              <View style={[styles.errorBox, { backgroundColor: colors.redMuted, borderColor: colors.red + '40' }]}>
+                <Ionicons name="alert-circle-outline" size={16} color={colors.red} />
+                <Text style={[styles.errorText, { color: colors.red }]}>{error}</Text>
               </View>
             ) : null}
 
-            <Text style={s.label}>Full Name</Text>
-            <View style={s.inputRow}>
-              <Ionicons name="person-outline" size={18} color="#666" />
+            <Text style={[styles.label, { color: colors.textMuted }]}>Full Name</Text>
+            <View style={[styles.inputRow, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <Ionicons name="person-outline" size={18} color={colors.textMuted} />
               <TextInput
-                style={s.input}
+                style={[styles.input, { color: colors.textPrimary }]}
                 placeholder="Alex Johnson"
-                placeholderTextColor="#444"
+                placeholderTextColor={colors.textMuted}
                 value={name}
                 onChangeText={(t) => { setName(t); setError(''); }}
               />
             </View>
 
-            <Text style={s.label}>Email</Text>
-            <View style={s.inputRow}>
-              <Ionicons name="mail-outline" size={18} color="#666" />
+            <Text style={[styles.label, { color: colors.textMuted }]}>Email</Text>
+            <View style={[styles.inputRow, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <Ionicons name="mail-outline" size={18} color={colors.textMuted} />
               <TextInput
-                style={s.input}
+                style={[styles.input, { color: colors.textPrimary }]}
                 placeholder="you@example.com"
-                placeholderTextColor="#444"
+                placeholderTextColor={colors.textMuted}
                 autoCapitalize="none"
                 keyboardType="email-address"
                 value={email}
@@ -101,13 +106,13 @@ export default function RegisterScreen() {
               />
             </View>
 
-            <Text style={s.label}>Password</Text>
-            <View style={s.inputRow}>
-              <Ionicons name="lock-closed-outline" size={18} color="#666" />
+            <Text style={[styles.label, { color: colors.textMuted }]}>Password</Text>
+            <View style={[styles.inputRow, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <Ionicons name="lock-closed-outline" size={18} color={colors.textMuted} />
               <TextInput
-                style={s.input}
+                style={[styles.input, { color: colors.textPrimary }]}
                 placeholder="Min. 6 characters"
-                placeholderTextColor="#444"
+                placeholderTextColor={colors.textMuted}
                 secureTextEntry={!showPassword}
                 returnKeyType="done"
                 value={password}
@@ -115,87 +120,73 @@ export default function RegisterScreen() {
                 onSubmitEditing={handleRegister}
               />
               <TouchableOpacity onPress={() => setShowPassword((v) => !v)}>
-                <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color="#666" />
+                <Ionicons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={18}
+                  color={colors.textMuted}
+                />
               </TouchableOpacity>
             </View>
 
             <TouchableOpacity
-              style={[s.btn, loading && { opacity: 0.6 }]}
+              style={[styles.btn, { backgroundColor: colors.primary, shadowColor: colors.primary }, loading && { opacity: 0.6 }]}
               onPress={handleRegister}
               disabled={loading}
               activeOpacity={0.85}
             >
-              {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.btnText}>Create Account</Text>}
+              {loading
+                ? <ActivityIndicator color="#fff" />
+                : <Text style={styles.btnText}>Create Account</Text>}
             </TouchableOpacity>
           </View>
 
-          <View style={s.footer}>
-            <Text style={s.footerText}>Already have an account? </Text>
+          <View style={styles.footer}>
+            <Text style={[styles.footerText, { color: colors.textMuted }]}>Already have an account? </Text>
             <TouchableOpacity onPress={() => router.push('/login')}>
-              <Text style={s.footerLink}>Sign in</Text>
+              <Text style={[styles.footerLink, { color: colors.primary }]}>Sign in</Text>
             </TouchableOpacity>
           </View>
-
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
-const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0f0f0f' },
-  scroll: { flexGrow: 1, paddingHorizontal: 24, paddingBottom: 32 },
+const styles = StyleSheet.create({
+  scroll: { flexGrow: 1, paddingBottom: 32 },
 
   backBtn: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: '#1a1a1a', alignItems: 'center', justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center',
     marginTop: 16, marginBottom: 8,
   },
-
   logoBlock: { alignItems: 'center', paddingTop: 20, paddingBottom: 32 },
-  logoCircle: {
-    width: 84, height: 84, borderRadius: 24,
-    backgroundColor: '#1a1a1a', borderWidth: 1.5, borderColor: '#f86c1b40',
-    alignItems: 'center', justifyContent: 'center', marginBottom: 18,
-    shadowColor: '#f86c1b', shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3, shadowRadius: 16, elevation: 10,
-  },
-  logoEmoji: { fontSize: 42 },
-  appName: { fontSize: 30, fontWeight: '900', color: '#fff', letterSpacing: 1 },
-  tagline: { fontSize: 12, color: '#666', marginTop: 4, letterSpacing: 0.8 },
 
-  card: {
-    backgroundColor: '#181818', borderRadius: 24,
-    padding: 24, borderWidth: 1, borderColor: '#252525',
-  },
-  cardTitle: { fontSize: 22, fontWeight: '800', color: '#fff', marginBottom: 4 },
-  cardSub: { fontSize: 13, color: '#666', marginBottom: 24 },
+  card: { borderRadius: 24, padding: 24, borderWidth: 1 },
+  cardTitle: { fontSize: 22, fontWeight: '800', marginBottom: 4 },
+  cardSub: { fontSize: 13, marginBottom: 24 },
 
   errorBox: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: '#2a1010', borderRadius: 10, padding: 12,
-    borderWidth: 1, borderColor: '#EF444440', marginBottom: 16,
+    borderRadius: 10, padding: 12, borderWidth: 1, marginBottom: 16,
   },
-  errorText: { fontSize: 13, color: '#EF4444', flex: 1 },
+  errorText: { fontSize: 13, flex: 1 },
 
-  label: { fontSize: 12, color: '#888', fontWeight: '600', letterSpacing: 0.5, marginBottom: 8, marginTop: 16 },
+  label: { fontSize: 12, fontWeight: '600', letterSpacing: 0.5, marginBottom: 8, marginTop: 16 },
   inputRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: '#111', borderRadius: 14,
-    paddingHorizontal: 14, height: 50,
-    borderWidth: 1.5, borderColor: '#252525',
+    borderRadius: 14, paddingHorizontal: 14, height: 50, borderWidth: 1.5,
   },
-  input: { flex: 1, color: '#fff', fontSize: 14 },
+  input: { flex: 1, fontSize: 14 },
 
   btn: {
-    marginTop: 28, backgroundColor: '#f86c1b', borderRadius: 14,
-    height: 52, alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#f86c1b', shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35, shadowRadius: 12, elevation: 8,
+    marginTop: 28, borderRadius: 14, height: 52,
+    alignItems: 'center', justifyContent: 'center',
+    shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 8,
   },
   btnText: { fontSize: 15, fontWeight: '800', color: '#fff', letterSpacing: 0.5 },
 
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 24 },
-  footerText: { fontSize: 13, color: '#555' },
-  footerLink: { fontSize: 13, fontWeight: '700', color: '#f86c1b' },
+  footerText: { fontSize: 13 },
+  footerLink: { fontSize: 13, fontWeight: '700' },
 });

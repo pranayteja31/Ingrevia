@@ -13,6 +13,10 @@ OFF_PRODUCT_FIELDS = (
     'image_small_url,nutriments,ingredients_text,allergens_tags,'
     'serving_quantity,additives_tags'
 )
+# OFF blocks requests without a proper User-Agent (returns 403)
+OFF_HEADERS = {
+    'User-Agent': 'Ingrevia/1.0 (nutriscan-app; contact@ingrevia.app)',
+}
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -83,7 +87,8 @@ def search_products(request):
                 'page_size': page_size,
                 'fields': OFF_PRODUCT_FIELDS,
             },
-            timeout=10,
+            headers=OFF_HEADERS,
+            timeout=15,
         )
         resp.raise_for_status()
         data = resp.json()
@@ -113,7 +118,8 @@ def product_by_barcode(request, barcode):
         resp = requests.get(
             f'{OFF_BASE}/api/v2/product/{barcode}.json',
             params={'fields': OFF_PRODUCT_FIELDS},
-            timeout=10,
+            headers=OFF_HEADERS,
+            timeout=15,
         )
         resp.raise_for_status()
         data = resp.json()

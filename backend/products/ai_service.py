@@ -20,7 +20,7 @@ from .prompts import (
 
 # ── Configuration ──────────────────────────────────────────────────────────────
 GEMINI_API_KEY = config('GOOGLE_API_KEY', default='')
-GEMINI_MODEL   = 'gemini-2.5-flash'
+GEMINI_MODEL   = 'gemini-2.0-flash'
 
 _client = None
 if GEMINI_API_KEY:
