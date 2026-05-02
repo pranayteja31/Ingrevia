@@ -22,9 +22,6 @@ export default function ProfileScreen() {
           style: 'destructive',
           onPress: async () => {
             await logout();
-            // Use dismissAll to fully unwind the navigation stack,
-            // then replace with login so back-button can't return to tabs.
-            router.dismissAll();
             router.replace('/login');
           },
         },
