@@ -1,5 +1,9 @@
-# Unnecessary documents and mockups
-Design Template.docx
-Nutritional and Compositional Analysis.docx
-Untitled/
-api_routes_report.md
+# Ignore everything in the root
+/*
+
+# But not these directories
+!/FRONTEND/
+!/backend/
+
+# And not .gitignore
+!/.gitignore
