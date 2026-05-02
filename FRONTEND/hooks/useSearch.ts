@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Alert } from 'react-native';
 import { ProductsAPI, NormalizedProduct } from '../constants/api';
 
 const PAGE_SIZE = 20;
@@ -46,8 +45,7 @@ export function useSearch(): UseSearchReturn {
     if (append) setLoadingMore(true);
     else setLoading(true);
 
-    const { data, error } = await ProductsAPI.search(q, pg, PAGE_SIZE);
-    if (error) Alert.alert('Search Error', error);
+    const { data } = await ProductsAPI.search(q, pg, PAGE_SIZE);
 
     const products = data?.products ?? [];
     setResults(append ? (prev) => [...prev, ...products] : products);
