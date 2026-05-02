@@ -2,24 +2,21 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import { useTheme } from '../../constants/ThemeContext';
 import { useAuth } from '../../constants/AuthContext';
 
 export default function ProfileScreen() {
   const { colors, isDark, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
-  const router = useRouter();
 
   const handleLogout = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Sign Out', style: 'destructive',
-        onPress: async () => {
-          await logout();
-          router.replace('/login' as any);
-        },
+        // Just call logout() — AuthGuard in _layout.tsx automatically redirects
+        // to /login when user becomes null. No manual navigation needed here.
+        onPress: () => logout(),
       },
     ]);
   };

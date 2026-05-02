@@ -13,11 +13,19 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (isLoading) return;
-    const seg0 = segments[0] as string;
-    const inAuthGroup = seg0 === 'login' || seg0 === 'register';
-    const inSplash = seg0 === 'index' || !segments.length;
 
-    if (!user && !inAuthGroup && !inSplash) {
+    const seg0 = segments[0] as string | undefined;
+
+    // Routes that are publicly accessible without authentication
+    const publicRoutes = ['login', 'register', 'error-screen'];
+    // The splash index screen handles its own redirect in its own useEffect
+    const isSplash = !seg0 || seg0 === 'index';
+    const isPublic = isSplash || publicRoutes.includes(seg0 ?? '');
+
+    if (!user && !isPublic) {
+      // User logged out (or session expired) while on a protected screen.
+      // AuthGuard is the single place that redirects to login — no screen
+      // should call router.replace('/login') directly after logout().
       router.replace('/login' as any);
     }
   }, [user, isLoading, segments]);
