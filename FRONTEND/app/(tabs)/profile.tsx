@@ -12,19 +12,25 @@ export default function ProfileScreen() {
   const router = useRouter();
 
   const handleLogout = async () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: async () => {
-          await logout();           // clears token + sets user = null
-          router.replace('/login'); // navigate immediately after
-          // AuthGuard will also detect user===null, but by this point
-          // segments[0] === 'login' (public), so it won't double-navigate.
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            await logout();
+            // Use dismissAll to fully unwind the navigation stack,
+            // then replace with login so back-button can't return to tabs.
+            router.dismissAll();
+            router.replace('/login');
+          },
         },
-      },
-    ]);
+      ],
+      { cancelable: true }
+    );
   };
 
   const genderLabel = (g?: string) => {
