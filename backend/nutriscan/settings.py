@@ -73,9 +73,31 @@ TEMPLATES = [
 WSGI_APPLICATION = 'nutriscan.wsgi.application'
 
 # ── Database ───────────────────────────────────────────────────────────────────
-# Database configuration has been moved to a separate file (database.py) so 
-# organizations can easily customize the linking to their preferred external/cloud database.
-from .database import DATABASES
+# Development: SQLite (zero config)
+# Production:  set DB_ENGINE=django.db.backends.postgresql and fill DB_* vars
+# Use SQLite when DB_ENGINE is blank/unset or explicitly set to sqlite3.
+# Set DB_ENGINE=django.db.backends.postgresql (and DB_NAME/USER/etc.) for production.
+DB_ENGINE = config('DB_ENGINE', default='').strip()
+
+if not DB_ENGINE or DB_ENGINE == 'django.db.backends.sqlite3':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+else:
+    # PostgreSQL / MySQL for production
+    DATABASES = {
+        'default': {
+            'ENGINE': DB_ENGINE,
+            'NAME':     config('DB_NAME'),
+            'USER':     config('DB_USER'),
+            'PASSWORD': config('DB_PASSWORD'),
+            'HOST':     config('DB_HOST', default='localhost'),
+            'PORT':     config('DB_PORT', default='5432'),
+        }
+    }
 
 # ── Auth ───────────────────────────────────────────────────────────────────────
 AUTH_USER_MODEL = 'users.User'
