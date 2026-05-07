@@ -71,8 +71,24 @@ def _normalize_product(raw: dict) -> dict:
 def search_products(request):
     """GET /api/products/search/?q=…&page=1&page_size=20"""
     q = request.query_params.get('q', '').strip()
-    page = request.query_params.get('page', 1)
-    page_size = request.query_params.get('page_size', 20)
+    raw_page = request.query_params.get('page', 1)
+    raw_page_size = request.query_params.get('page_size', 20)
+
+    try:
+        page = int(raw_page)
+        if page < 1:
+            page = 1
+    except (ValueError, TypeError):
+        page = 1
+
+    try:
+        page_size = int(raw_page_size)
+        if page_size < 1:
+            page_size = 20
+        elif page_size > 50:
+            page_size = 50
+    except (ValueError, TypeError):
+        page_size = 20
 
     if not q:
         return Response({'error': 'Query parameter "q" is required.'}, status=status.HTTP_400_BAD_REQUEST)
