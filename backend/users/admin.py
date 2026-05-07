@@ -8,5 +8,5 @@ class UserAdmin(BaseUserAdmin):
     list_display = ['email', 'name', 'age', 'health_goals', 'is_active', 'date_joined']
     search_fields = ['email', 'name']
     fieldsets = BaseUserAdmin.fieldsets + (
-        ('NutriScan Profile', {'fields': ('name', 'age', 'health_goals')}),
+        ('Ingrevia Profile', {'fields': ('name', 'age', 'health_goals')}),
     )

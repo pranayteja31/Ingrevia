@@ -34,7 +34,7 @@ export default function LogoBranding({ size = 'md' }: Props) {
         <Text style={{ fontSize: emojiSize }}>🥬</Text>
       </View>
       <Text style={[styles.name, { fontSize: nameSize, color: colors.textPrimary }]}>
-        NutriScan
+        Ingrevia
       </Text>
       <Text style={[styles.tagline, { color: colors.textMuted }]}>
         Scan Smarter. Eat Better.

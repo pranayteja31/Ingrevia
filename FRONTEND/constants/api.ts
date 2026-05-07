@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from './config';
 
-const TOKEN_KEY = 'nutriscan_auth_token';
+const TOKEN_KEY = 'ingrevia_auth_token';
 
 // ─── Token helpers ──────────────────────────────────────────────────────────
 
@@ -41,11 +41,18 @@ export async function apiFetch<T = any>(
   }
 
   try {
+    const controller = new AbortController();
+    // 30 second timeout — AI image analysis can take 10-20 seconds
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
     const response = await fetch(`${BASE_URL}${path}`, {
       method,
       headers,
       body: body ? JSON.stringify(body) : undefined,
+      signal: controller.signal as any, // Cast to any to avoid TS dom lib mismatch
     });
+
+    clearTimeout(timeoutId);
 
     const text = await response.text();
     let data: any = null;

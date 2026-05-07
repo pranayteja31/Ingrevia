@@ -48,15 +48,15 @@ export default function ErrorScreen() {
         </Animated.View>
 
         {/* Headline */}
-        <Text style={styles.title}>Connection Failed</Text>
+        <Text style={styles.title}>Oops!</Text>
         <Text style={styles.subtitle}>
-          NutriScan couldn't start up properly. This usually means:
+          Ingrevia couldn't start up properly. This usually means:
         </Text>
 
         {/* Reason list */}
         {[
           { icon: 'wifi-outline', text: 'No internet connection detected' },
-          { icon: 'server-outline', text: 'The NutriScan servers are unreachable' },
+          { icon: 'server-outline', text: 'The Ingrevia servers are unreachable' },
           { icon: 'cloud-download-outline', text: 'Health data could not be fetched' },
         ].map((r) => (
           <View key={r.text} style={styles.reasonRow}>
@@ -88,7 +88,7 @@ export default function ErrorScreen() {
       </Animated.View>
 
       {/* App name watermark */}
-      <Text style={styles.watermark}>NutriScan v1.0.0</Text>
+      <Text style={styles.watermark}>Ingrevia v1.0.0</Text>
     </SafeAreaView>
   );
 }

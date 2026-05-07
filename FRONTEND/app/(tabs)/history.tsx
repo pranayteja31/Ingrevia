@@ -29,7 +29,7 @@ export default function HistoryScreen() {
 
   const loadHistory = async () => {
     try {
-      const raw = await AsyncStorage.getItem('nutriscan_history');
+      const raw = await AsyncStorage.getItem('ingrevia_history');
       setHistory(raw ? JSON.parse(raw) : []);
     } catch {
       setHistory([]);
@@ -41,7 +41,7 @@ export default function HistoryScreen() {
   useFocusEffect(useCallback(() => { setLoading(true); loadHistory(); }, []));
 
   const clearHistory = async () => {
-    await AsyncStorage.removeItem('nutriscan_history');
+    await AsyncStorage.removeItem('ingrevia_history');
     setHistory([]);
   };
 

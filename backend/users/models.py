@@ -4,7 +4,7 @@ from django.db import models
 
 class User(AbstractUser):
     """
-    NutriScan User — full profile schema.
+    Ingrevia User — full profile schema.
 
     Fields (beyond AbstractUser's id, username, email, password, date_joined, last_login):
     ─────────────────────────────────────────────────────────────────────────────

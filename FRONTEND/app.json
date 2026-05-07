@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "NutriScan",
-    "slug": "nutriscan",
+    "name": "Ingrevia",
+    "slug": "ingrevia",
     "version": "1.0.0",
-    "scheme": "nutriscan",
+    "scheme": "ingrevia",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.nutriscan.app"
+      "bundleIdentifier": "com.ingrevia.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -24,7 +24,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.nutriscan.app",
+      "package": "com.ingrevia.app",
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
@@ -41,7 +41,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow NutriScan to access your photos to scan food labels."
+          "photosPermission": "Allow Ingrevia to access your photos to scan food labels."
         }
       ]
     ],
