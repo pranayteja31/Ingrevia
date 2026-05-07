@@ -7,3 +7,4 @@
 
 # And not .gitignore
 !/.gitignore
+!/README.md

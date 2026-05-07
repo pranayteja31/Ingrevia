@@ -102,11 +102,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    // Clear local state immediately so the UI responds instantly.
-    // Backend token invalidation is a best-effort cleanup — we don't wait for it.
+    try {
+      await AuthAPI.logout();
+    } catch {}
     await clearToken();
     setUser(null);
-    try { AuthAPI.logout(); } catch {}
   };
 
   return (

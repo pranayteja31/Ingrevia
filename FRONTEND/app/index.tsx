@@ -33,7 +33,7 @@ export default function SplashScreen() {
     if (!isLoading) {
       router.replace(user ? '/(tabs)' : '/login');
     }
-  }, [isLoading]);
+  }, [isLoading, router, user]);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>

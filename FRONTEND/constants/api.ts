@@ -42,17 +42,20 @@ export async function apiFetch<T = any>(
 
   try {
     const controller = new AbortController();
-    // 30 second timeout — AI image analysis can take 10-20 seconds
+    // AI image analysis can take 10-20 seconds.
     const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-    const response = await fetch(`${BASE_URL}${path}`, {
-      method,
-      headers,
-      body: body ? JSON.stringify(body) : undefined,
-      signal: controller.signal as any, // Cast to any to avoid TS dom lib mismatch
-    });
-
-    clearTimeout(timeoutId);
+    let response: Response;
+    try {
+      response = await fetch(`${BASE_URL}${path}`, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined,
+        signal: controller.signal as any,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     const text = await response.text();
     let data: any = null;

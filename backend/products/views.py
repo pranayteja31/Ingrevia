@@ -64,6 +64,29 @@ def _normalize_product(raw: dict) -> dict:
     }
 
 
+def _fetch_product_by_barcode(barcode: str) -> tuple[dict | None, Response | None]:
+    """Fetch and normalize a product by barcode, or return an API error response."""
+    try:
+        resp = requests.get(
+            f'{OFF_BASE}/api/v2/product/{barcode}.json',
+            params={'fields': OFF_PRODUCT_FIELDS},
+            headers=OFF_HEADERS,
+            timeout=15,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+    except requests.RequestException as e:
+        return None, Response(
+            {'error': f'Failed to reach Open Food Facts: {str(e)}'},
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
+
+    if data.get('status') != 1 or not data.get('product'):
+        return None, Response({'error': 'Product not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    return _normalize_product({**data['product'], 'code': barcode}), None
+
+
 # ── Views ──────────────────────────────────────────────────────────────────────
 
 @api_view(['GET'])
@@ -130,22 +153,9 @@ def search_products(request):
 @permission_classes([IsAuthenticated])
 def product_by_barcode(request, barcode):
     """GET /api/products/barcode/<barcode>/"""
-    try:
-        resp = requests.get(
-            f'{OFF_BASE}/api/v2/product/{barcode}.json',
-            params={'fields': OFF_PRODUCT_FIELDS},
-            headers=OFF_HEADERS,
-            timeout=15,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-    except requests.RequestException as e:
-        return Response({'error': f'Failed to reach Open Food Facts: {str(e)}'}, status=status.HTTP_502_BAD_GATEWAY)
-
-    if data.get('status') != 1 or not data.get('product'):
-        return Response({'error': 'Product not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-    product = _normalize_product({**data['product'], 'code': barcode})
+    product, error_response = _fetch_product_by_barcode(barcode)
+    if error_response is not None:
+        return error_response
     return Response(product)
 
 
@@ -186,6 +196,9 @@ def analyze_barcode(request):
         barcode = ai_service.extract_barcode(image_data)
         if not barcode:
             return Response({'error': 'No barcode detected in the image.'}, status=status.HTTP_404_NOT_FOUND)
-        return product_by_barcode(request._request, barcode)
+        product, error_response = _fetch_product_by_barcode(barcode)
+        if error_response is not None:
+            return error_response
+        return Response(product)
     except Exception as e:
         return Response({'error': f'Barcode analysis failed: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

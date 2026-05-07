@@ -10,7 +10,8 @@ interface Action {
 }
 
 interface Props {
-  emoji: string;
+  emoji?: string;
+  icon?: keyof typeof Ionicons.glyphMap;
   title: string;
   subtitle?: string;
   action?: Action;
@@ -26,12 +27,18 @@ interface Props {
  *  - `card={true}`  → bordered card with padding (home hero blocks)
  *  - `card={false}` → full-screen centred layout (loading / empty screens)
  */
-export default function EmptyState({ emoji, title, subtitle, action, card = false }: Props) {
+export default function EmptyState({ emoji, icon, title, subtitle, action, card = false }: Props) {
   const { colors } = useTheme();
 
   const inner = (
     <>
-      <Text style={styles.emoji}>{emoji}</Text>
+      {icon ? (
+        <View style={[styles.iconWrap, { backgroundColor: colors.primary + '20' }]}>
+          <Ionicons name={icon} size={28} color={colors.primary} />
+        </View>
+      ) : (
+        <Text style={styles.emoji}>{emoji}</Text>
+      )}
       <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
       {subtitle ? (
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{subtitle}</Text>
@@ -69,6 +76,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start', gap: 8,
   },
   emoji: { fontSize: 36 },
+  iconWrap: {
+    width: 46, height: 46, borderRadius: 23,
+    alignItems: 'center', justifyContent: 'center',
+  },
   title: { fontSize: 17, fontWeight: '800' },
   subtitle: { fontSize: 13, lineHeight: 20 },
   btn: {

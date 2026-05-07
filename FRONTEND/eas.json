@@ -17,13 +17,13 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.ingrevia.com"
+        "EXPO_PUBLIC_API_URL": ""
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.ingrevia.com"
+        "EXPO_PUBLIC_API_URL": ""
       }
     }
   },

@@ -10,13 +10,14 @@ Behaviour by environment:
                 ALLOWED_HOSTS enforced, strong password validators active
 """
 from pathlib import Path
+from urllib.parse import unquote, urlparse
 from decouple import config, Csv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ── Core ───────────────────────────────────────────────────────────────────────
 SECRET_KEY = config('SECRET_KEY')
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = config('DEBUG', default=True, cast=bool)
 
 # In dev, accept any host. In production, enforce the ALLOWED_HOSTS list.
 if DEBUG:
@@ -73,31 +74,68 @@ TEMPLATES = [
 WSGI_APPLICATION = 'nutriscan.wsgi.application'
 
 # ── Database ───────────────────────────────────────────────────────────────────
-# Development: SQLite (zero config)
-# Production:  set DB_ENGINE=django.db.backends.postgresql and fill DB_* vars
-# Use SQLite when DB_ENGINE is blank/unset or explicitly set to sqlite3.
-# Set DB_ENGINE=django.db.backends.postgresql (and DB_NAME/USER/etc.) for production.
-DB_ENGINE = config('DB_ENGINE', default='').strip()
+def _database_from_url(database_url: str) -> dict:
+    """Parse a provider DATABASE_URL into Django's DATABASES format."""
+    parsed = urlparse(database_url)
+    engine_by_scheme = {
+        'postgres': 'django.db.backends.postgresql',
+        'postgresql': 'django.db.backends.postgresql',
+        'mysql': 'django.db.backends.mysql',
+        'sqlite': 'django.db.backends.sqlite3',
+    }
+    engine = engine_by_scheme.get(parsed.scheme)
+    if not engine:
+        raise RuntimeError(f'Unsupported DATABASE_URL scheme: {parsed.scheme}')
 
-if not DB_ENGINE or DB_ENGINE == 'django.db.backends.sqlite3':
+    if engine == 'django.db.backends.sqlite3':
+        return {
+            'ENGINE': engine,
+            'NAME': unquote(parsed.path.lstrip('/')) or BASE_DIR / 'db.sqlite3',
+        }
+
+    return {
+        'ENGINE': engine,
+        'NAME': unquote(parsed.path.lstrip('/')),
+        'USER': unquote(parsed.username or ''),
+        'PASSWORD': unquote(parsed.password or ''),
+        'HOST': parsed.hostname or '',
+        'PORT': str(parsed.port or ''),
+    }
+
+
+# Database
+# DB_MODE=sqlite uses a local SQLite file for development/testing.
+# DB_MODE=cloud uses DATABASE_URL or DB_ENGINE/DB_* values for managed databases.
+DB_MODE = config('DB_MODE', default='sqlite').strip().lower()
+
+if DB_MODE == 'sqlite':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'NAME': config('SQLITE_NAME', default=BASE_DIR / 'db.sqlite3'),
         }
     }
+elif DB_MODE == 'cloud':
+    DATABASE_URL = config('DATABASE_URL', default='').strip()
+    if DATABASE_URL:
+        DATABASES = {'default': _database_from_url(DATABASE_URL)}
+    else:
+        DATABASES = {
+            'default': {
+                'ENGINE': config('DB_ENGINE'),
+                'NAME': config('DB_NAME'),
+                'USER': config('DB_USER'),
+                'PASSWORD': config('DB_PASSWORD'),
+                'HOST': config('DB_HOST'),
+                'PORT': config('DB_PORT', default='5432'),
+            }
+        }
 else:
-    # PostgreSQL / MySQL for production
-    DATABASES = {
-        'default': {
-            'ENGINE': DB_ENGINE,
-            'NAME':     config('DB_NAME'),
-            'USER':     config('DB_USER'),
-            'PASSWORD': config('DB_PASSWORD'),
-            'HOST':     config('DB_HOST', default='localhost'),
-            'PORT':     config('DB_PORT', default='5432'),
-        }
-    }
+    raise RuntimeError('DB_MODE must be either "sqlite" or "cloud".')
+
+if DB_MODE == 'cloud' and config('DB_SSL_REQUIRE', default=True, cast=bool):
+    DATABASES['default'].setdefault('OPTIONS', {})
+    DATABASES['default']['OPTIONS']['sslmode'] = 'require'
 
 # ── Auth ───────────────────────────────────────────────────────────────────────
 AUTH_USER_MODEL = 'users.User'

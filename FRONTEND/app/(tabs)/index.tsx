@@ -105,7 +105,9 @@ export default function HomeScreen() {
         {/* ── No results ── */}
         {!loading && searched && results.length === 0 ? (
           <View style={styles.centerState}>
-            <Text style={{ fontSize: 40 }}>🔍</Text>
+            <View style={[styles.emptyIconWrap, { backgroundColor: colors.primary + '20' }]}>
+              <Ionicons name="search-outline" size={28} color={colors.primary} />
+            </View>
             <Text style={[styles.stateText, { color: colors.textSecondary }]}>No results for "{query}"</Text>
             <Text style={{ fontSize: 13, color: colors.textMuted, textAlign: 'center', marginBottom: 16 }}>
               Try searching specifically for Indian version, or use our AI assistant.
@@ -151,14 +153,14 @@ export default function HomeScreen() {
         {!searched ? (
           <View style={styles.heroBlock}>
             <EmptyState
-              emoji="🔎"
+              icon="search-outline"
               title="Search Any Food Product"
-              subtitle="Search by name or brand to get instant nutritional analysis, allergen info, Nutri-Score ratings, and health risk data—powered by Open Food Facts."
+              subtitle="Search by name or brand to get instant nutritional analysis and Ingredient List"
               card
             />
             <View style={{ height: 12 }} />
             <EmptyState
-              emoji="📷"
+              icon="camera-outline"
               title="Or Scan a Barcode"
               subtitle="Tap the scan button below to use your camera for instant barcode scanning or ingredient label analysis."
               action={{ label: 'Open Scanner', icon: 'scan', onPress: () => router.push('/scan') }}
@@ -245,6 +247,10 @@ const styles = StyleSheet.create({
   searchBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
 
   centerState: { alignItems: 'center', paddingVertical: 40, gap: 12 },
+  emptyIconWrap: {
+    width: 56, height: 56, borderRadius: 28,
+    alignItems: 'center', justifyContent: 'center',
+  },
   stateText: { fontSize: 15, fontWeight: '600', marginTop: 8 },
 
   indianBtn: {

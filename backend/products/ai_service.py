@@ -8,7 +8,10 @@ live here. Views call these functions and stay thin.
 import base64
 import json
 from decouple import config
-from google import genai
+try:
+    from google import genai
+except ImportError:
+    genai = None
 
 from .prompts import (
     LABEL_ANALYSIS_PROMPT,
@@ -23,13 +26,23 @@ GEMINI_API_KEY = config('GOOGLE_API_KEY', default='')
 GEMINI_MODEL   = 'gemini-2.5-flash'
 
 _client = None
-if GEMINI_API_KEY:
-    _client = genai.Client(api_key=GEMINI_API_KEY)
 
 
 def is_configured() -> bool:
-    """Check whether the Gemini API key is set."""
-    return _client is not None
+    """Check whether Gemini can be used on this machine."""
+    return bool(GEMINI_API_KEY and genai is not None)
+
+
+def _get_client():
+    """Create the Gemini client lazily so Django can start without AI setup."""
+    global _client
+    if genai is None:
+        raise RuntimeError('google-genai is not installed. Run pip install -r requirements.txt.')
+    if not GEMINI_API_KEY:
+        raise RuntimeError('GOOGLE_API_KEY is not configured.')
+    if _client is None:
+        _client = genai.Client(api_key=GEMINI_API_KEY)
+    return _client
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -66,9 +79,10 @@ def analyze_label_image(image_b64: str, product_name: str = '') -> dict:
         else LABEL_NAME_HINT_DETECT
     )
     prompt = LABEL_ANALYSIS_PROMPT.format(name_hint=name_hint)
+    client = _get_client()
 
     image_part = genai.types.Part.from_bytes(data=image_bytes, mime_type='image/jpeg')
-    response = _client.models.generate_content(
+    response = client.models.generate_content(
         model=GEMINI_MODEL,
         contents=[prompt, image_part],
     )
@@ -97,9 +111,10 @@ def extract_barcode(image_b64: str) -> str | None:
     Send an image to Gemini and return the barcode digits, or None.
     """
     image_bytes = _decode_image(image_b64)
+    client = _get_client()
 
     image_part = genai.types.Part.from_bytes(data=image_bytes, mime_type='image/jpeg')
-    response = _client.models.generate_content(
+    response = client.models.generate_content(
         model=GEMINI_MODEL,
         contents=[BARCODE_EXTRACTION_PROMPT, image_part],
     )
@@ -116,8 +131,9 @@ def search_indian_products(query: str) -> list[dict]:
     Returns a list of product dicts (may be empty).
     """
     try:
+        client = _get_client()
         prompt = INDIAN_PRODUCT_SEARCH_PROMPT.format(query=query)
-        response = _client.models.generate_content(
+        response = client.models.generate_content(
             model=GEMINI_MODEL,
             contents=prompt,
         )
