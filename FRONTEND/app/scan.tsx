@@ -1,7 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Alert, Image,
-  FlatList, Animated, Keyboard, Platform,
   ScrollView, ActivityIndicator, Modal,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,13 +10,10 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../constants/ThemeContext';
-import { useProduct, ProductData } from '../constants/ProductContext';
-import { ProductsAPI, NormalizedProduct } from '../constants/api';
+import { useProduct } from '../constants/ProductContext';
+import { ProductsAPI } from '../constants/api';
 import { normalizedToProductData } from '../utils/productMapper';
 import SearchBar from '../components/SearchBar';
-import ProductCard from '../components/ProductCard';
-
-const SEARCH_BAR_H = 52;
 
 type ScanMode = 'barcode' | 'ingredient';
 
@@ -56,68 +52,6 @@ export default function ScanScreen() {
       setProductNameInput('');
     }, [])
   );
-
-  // ── Floating search state ──
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchFocused, setSearchFocused] = useState(false);
-  const [suggestions, setSuggestions] = useState<NormalizedProduct[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const inputRef = useRef<any>(null);
-
-  // Slide + dim animations for keyboard
-  const slideY     = useRef(new Animated.Value(0)).current;
-  const dimOpacity = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const BOTTOM_REST = insets.bottom + 20;
-    const showEv = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEv = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
-
-    const onShow = Keyboard.addListener(showEv, (e) => {
-      if (showNamePrompt) return;
-      const translation = -(e.endCoordinates.height - BOTTOM_REST + 20);
-      setSearchFocused(true);
-      Animated.parallel([
-        Animated.spring(slideY, { toValue: translation, useNativeDriver: true, bounciness: 4, speed: 14 }),
-        Animated.timing(dimOpacity, { toValue: 1, duration: 220, useNativeDriver: true }),
-      ]).start();
-    });
-
-    const onHide = Keyboard.addListener(hideEv, () => {
-      if (showNamePrompt) return;
-      Animated.parallel([
-        Animated.spring(slideY, { toValue: 0, useNativeDriver: true, bounciness: 3, speed: 14 }),
-        Animated.timing(dimOpacity, { toValue: 0, duration: 180, useNativeDriver: true }),
-      ]).start(() => setSearchFocused(false));
-    });
-
-    return () => { onShow.remove(); onHide.remove(); };
-  }, [insets.bottom, showNamePrompt]);
-
-  // Debounced search suggestions
-  useEffect(() => {
-    if (searchQuery.length < 2) { setSuggestions([]); return; }
-    const timer = setTimeout(async () => {
-      setSearchLoading(true);
-      const { data } = await ProductsAPI.search(searchQuery, 1, 7);
-      setSuggestions(data?.products ?? []);
-      setSearchLoading(false);
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  const dismissSearch = () => {
-    inputRef.current?.blur();
-    Keyboard.dismiss();
-    setSearchQuery('');
-    setSuggestions([]);
-  };
-
-  const openProduct = (raw: NormalizedProduct) => {
-    setCurrentProduct(normalizedToProductData(raw));
-    dismissSearch();
-    router.push('/product-detail' as any);
-  };
 
   // ── Barcode scan ──
   const handleBarcode = async ({ data }: { data: string; type: string }) => {
@@ -229,8 +163,6 @@ export default function ScanScreen() {
     }
   };
 
-  const showDropdown = searchFocused && (suggestions.length > 0 || searchLoading);
-
   if (!permission) return <View style={[styles.safe, { backgroundColor: colors.background }]} />;
 
   if (!permission.granted) {
@@ -255,7 +187,7 @@ export default function ScanScreen() {
 
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: insets.bottom + SEARCH_BAR_H + 36 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 112 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
@@ -433,51 +365,6 @@ export default function ScanScreen() {
           </View>
         </View>
       </Modal>
-
-      {/* Dim backdrop */}
-      <Animated.View
-        pointerEvents={searchFocused ? 'box-only' : 'none'}
-        style={[styles.backdrop, { opacity: dimOpacity }]}
-      >
-        <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={dismissSearch} />
-      </Animated.View>
-
-      {/* Floating search panel */}
-      <Animated.View
-        style={[styles.searchPanel, { bottom: insets.bottom + 20, transform: [{ translateY: slideY }], zIndex: 100 }]}
-      >
-        {showDropdown ? (
-          <View style={[styles.dropdown, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            {searchLoading ? (
-              <View style={styles.dropdownLoader}>
-                <ActivityIndicator size="small" color={colors.primary} />
-                <Text style={{ color: colors.textMuted, marginLeft: 10, fontSize: 13 }}>Searching…</Text>
-              </View>
-            ) : (
-              <FlatList
-                data={suggestions}
-                keyExtractor={(item) => item.id || item.name}
-                scrollEnabled={suggestions.length > 5}
-                keyboardShouldPersistTaps="handled"
-                ItemSeparatorComponent={() => <View style={[styles.separator, { backgroundColor: colors.border }]} />}
-                renderItem={({ item }) => (
-                  <ProductCard product={item} onPress={() => openProduct(item)} compact />
-                )}
-              />
-            )}
-          </View>
-        ) : null}
-
-        <SearchBar
-          ref={inputRef}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholder="Search product by name or brand…"
-          focused={searchFocused}
-          onCancel={dismissSearch}
-          height={SEARCH_BAR_H}
-        />
-      </Animated.View>
     </SafeAreaView>
   );
 }
@@ -542,18 +429,6 @@ const styles = StyleSheet.create({
   },
   scanBtnInner: { width: 54, height: 54, borderRadius: 27, borderWidth: 3, borderColor: 'rgba(255,255,255,0.5)' },
 
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.65)', zIndex: 99 },
-
-  searchPanel: { position: 'absolute', left: 16, right: 16 },
-  searchBar: {
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 10, elevation: 8,
-  },
-  dropdown: {
-    borderRadius: 16, borderWidth: 1, marginBottom: 8, overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 8,
-  },
-  dropdownLoader: { flexDirection: 'row', alignItems: 'center', padding: 16 },
-  separator: { height: 1, marginHorizontal: 14 },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
   modalCard: { width: '100%', borderRadius: 20, padding: 24, borderWidth: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 20, elevation: 16 },

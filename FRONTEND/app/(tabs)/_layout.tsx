@@ -53,7 +53,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
       <View style={styles.fabContainer}>
         <TouchableOpacity
           style={[styles.fab, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
-          onPress={() => router.push('/scan')}
+          onPress={() => router.push('/(tabs)/scan')}
           accessibilityRole="button"
           accessibilityLabel="Scan Item"
         >
@@ -122,6 +122,7 @@ export default function TabLayout() {
   return (
     <Tabs tabBar={(props) => <CustomTabBar {...props} />} screenOptions={{ headerShown: false }}>
       <Tabs.Screen name="index" />
+      <Tabs.Screen name="scan" />
       <Tabs.Screen name="profile" />
     </Tabs>
   );

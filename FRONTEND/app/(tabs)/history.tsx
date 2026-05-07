@@ -89,7 +89,7 @@ export default function HistoryScreen() {
           <Text style={[s.emptySub, { color: colors.textSecondary }]}>
             Scan a product barcode or search for food to populate your history.
           </Text>
-          <TouchableOpacity style={[s.scanBtn, { backgroundColor: colors.primary }]} onPress={() => router.push('/scan')}>
+          <TouchableOpacity style={[s.scanBtn, { backgroundColor: colors.primary }]} onPress={() => router.push('/(tabs)/scan')}>
             <Ionicons name="scan" size={18} color="#fff" />
             <Text style={s.scanBtnText}>Scan Now</Text>
           </TouchableOpacity>

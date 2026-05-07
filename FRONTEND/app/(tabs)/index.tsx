@@ -163,7 +163,7 @@ export default function HomeScreen() {
               icon="camera-outline"
               title="Or Scan a Barcode"
               subtitle="Tap the scan button below to use your camera for instant barcode scanning or ingredient label analysis."
-              action={{ label: 'Open Scanner', icon: 'scan', onPress: () => router.push('/scan') }}
+              action={{ label: 'Open Scanner', icon: 'scan', onPress: () => router.push('/(tabs)/scan') }}
               card
             />
           </View>
