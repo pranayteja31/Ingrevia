@@ -1,286 +1,294 @@
-# Ingrevia Setup
+# Ingrevia — Ultimate User Manual & Codebase Guide
 
-This repository contains a Django REST backend and an Expo React Native frontend.
-The code is configured to avoid machine-specific paths. Secrets and deployment
-endpoints live in local `.env` files that are ignored by git.
+> **Official codebase guide for the Ingrevia / NutriScan application.**
 
-## Prerequisites
+Ingrevia is a cutting-edge mobile nutrition scanner built with **React Native (Expo)** and **Django REST Framework**. It enables users to snap photos of food packaging, scan barcodes, and receive instant personalized nutritional analyses powered by Google Gemini AI and Open Food Facts.
 
-- Python 3.11 or newer
-- Node.js 20 or newer
-- npm
-- Expo CLI through `npx expo`
+---
 
-## Backend
+## Table of Contents
+1. [🚀 Quickstart Setup (Clone to Launch)](#1-quickstart-setup-clone-to-launch)
+2. [📂 Repository Map & File Index](#2-repository-map--file-index)
+3. [⚙️ Environment Configuration](#3-environment-configuration)
+4. [🏛️ Database Architecture](#4-database-architecture)
+5. [📡 API Architecture & Endpoints](#5-api-architecture--endpoints)
+6. [🔗 Networking: How The Stack Connects](#6-networking-how-the-stack-connects)
 
-```powershell
-cd backend
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-Copy-Item .env.example .env
-# Edit .env and set SECRET_KEY before continuing.
-python manage.py migrate
-python manage.py runserver 0.0.0.0:8000
+---
+
+## 1. 🚀 Quickstart Setup (Clone to Launch)
+
+Follow these exact steps to clone, install, configure, and run both layers of the application.
+
+### 📋 Prerequisites
+- **Python 3.11+** installed and added to PATH.
+- **Node.js 20+** (LTS recommended) + **npm**.
+- **Git** installed.
+- Expo Go app installed on your physical mobile device (optional but recommended).
+
+### 🛠️ Phase 1: Backend Configuration
+1. Navigate to the backend directory:
+   ```powershell
+   cd backend
+   ```
+2. Create and activate a Python Virtual Environment:
+   ```powershell
+   # Windows
+   python -m venv venv
+   .\venv\Scripts\Activate.ps1
+   
+   # macOS / Linux
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Set up your local secrets:
+   ```bash
+   copy .env.example .env
+   ```
+   *Open `.env` and insert a valid `SECRET_KEY` and your `GOOGLE_API_KEY` (obtainable from Google AI Studio).*
+5. Prepare the database:
+   ```bash
+   python manage.py migrate
+   ```
+6. Start the dev server (listens on all local IPs):
+   ```bash
+   python manage.py runserver 0.0.0.0:8000
+   ```
+
+### 🎨 Phase 2: Frontend Setup
+1. Open a new terminal window and navigate to the frontend directory:
+   ```bash
+   cd FRONTEND
+   ```
+2. Install Node modules:
+   ```bash
+   npm install
+   ```
+3. Boot the Expo Metro Bundler:
+   ```bash
+   npx expo start
+   ```
+4. **Run the App**:
+   - Press **`w`** to open the Web version in your browser.
+   - Press **`a`** to launch Android Emulator (requires Android Studio).
+   - **Scan the QR Code** using the **Expo Go app** on your physical iOS/Android device.
+
+---
+
+## 📂 Repository Map & File Index
+
+This section is an exhaustive index explaining what every single file in the system does.
+
+### 🖥️ Frontend Directory (`/FRONTEND`)
+Runtime: Expo SDK 54, Typescript, File-based Routing.
+
+#### `app/` — Screen Logic & Navigation
+| File | Purpose |
+|:---|:---|
+| `index.tsx` | **Root / Splash**: Checks auth token state and handles immediate navigation logic. |
+| `login.tsx` | Handles user authentication form submission via `AuthAPI`. |
+| `register.tsx` | Handles user onboarding logic and creation workflows. |
+| `scan.tsx` | Core scanner page controlling camera view, barcode extraction, and image selection. |
+| `product-detail.tsx` | Generates the full nutritional breakdown, ingredients lists, and health ratings. |
+| `error-screen.tsx` | Fallback screen for network failures with recursive state reloading. |
+| `_layout.tsx` | App providers wrapper supplying Theme, Product, and Authentication global contexts. |
+| `(tabs)/index.tsx` | **Home Screen**: Integrates recent scans feed, search bars, and hero components. |
+| `(tabs)/profile.tsx` | Displays current profile stats (Age, Gender, Allergens) and application settings. |
+| `(tabs)/_layout.tsx` | Bottom navigator configuration holding the active navigation stack. |
+
+#### `components/` — Shared UI Controls
+| File | Purpose |
+|:---|:---|
+| `SearchBar.tsx` | Global responsive text inputs with clearing controls. |
+| `ProductCard.tsx` | Visually renders compact and expanded versions of scanned food item objects. |
+| `NutriScoreBadge.tsx` | Conditional rendering component parsing A-E grading system for dynamic coloring. |
+| `EmptyState.tsx` | Generic placeholder rendering utilized in empty searches and history queues. |
+| `LogoBranding.tsx` | Maintains cohesive visual branding guidelines for authentication views. |
+
+#### `constants/` — Config & Central State
+| File | Purpose |
+|:---|:---|
+| `api.ts` | Centralized HTTP wrapper holding interfaces, bearer token injection, and payload parser logic. |
+| `AuthContext.tsx` | Manages the singleton `User` object and explicit login/logout operations. |
+| `ProductContext.tsx` | Shared memory space transferring selected items between listings and detail pages. |
+| `ThemeContext.tsx` | Manages current Dark/Light visual state settings. |
+| `config.ts` | Auto-resolvers ensuring the correct API URI is determined between LAN vs Prod nodes. |
+
+#### `utils/` & `hooks/`
+| File | Purpose |
+|:---|:---|
+| `productMapper.ts` | Strictly typed mapper casting external API dictionaries into frontend runtime structs. |
+| `useSearch.ts` | Encapsulates query lifecycle, pagination throttling, and debounced caching. |
+| `useHistory.ts` | Wraps explicit API history fetching allowing cross-component refreshing. |
+
+---
+
+### ⚙️ Backend Directory (`/backend`)
+Runtime: Django 5, Python 3.11, Django REST Framework (DRF).
+
+#### `nutriscan/` — Project Settings
+| File | Purpose |
+|:---|:---|
+| `settings.py` | Core config defining database backends, middleware order, application pipelines. |
+| `urls.py` | Global router mapping root requests to the local Application routers (`/api/...`). |
+
+#### `users/` — Authentication Layer
+| File | Purpose |
+|:---|:---|
+| `models.py` | Extends `AbstractUser` injecting personalized health, dietary, and allergic constraints. |
+| `serializers.py` | Translates memory models into JSON strings enforcing dynamic field generation. |
+| `views.py` | Explicit route implementations handling Registration, JWT-like creation, and Profile editing. |
+
+#### `products/` — Processing Layer
+| File | Purpose |
+|:---|:---|
+| `views.py` | High-level views orchestrating proxy logic between the device, AI services, and OFF dataset. |
+| `ai_service.py` | Wrapper around Google Gemini generating strictly structured model requests. |
+| `prompts.py` | Explicit string prompt templates engineering precise JSON formats from AI vision scans. |
+
+#### `history/` — Logging Layer
+| File | Purpose |
+|:---|:---|
+| `models.py` | Defines relational persistence for keeping track of user interaction history. |
+| `views.py` | Houses unique-together logic handling automatic history refreshes during repeat views. |
+
+---
+
+## 🏛️ Database Architecture
+
+The persistent data layer dictates how User states interact with historical tracking.
+
+### 📊 Entity Relationship Diagram (ERD)
+The following represents the relational constraints enforced within SQL storage:
+
+```mermaid
+erDiagram
+    nutriscan_user ||--o{ history_scanhistory : tracks
+    nutriscan_user ||--|| authtoken_token : authenticates
+    nutriscan_user {
+        int id PK
+        string email
+        string password
+        string name
+        string age
+        string gender
+        float weight_kg
+        float height_cm
+        string health_goals
+        string dietary_restrictions
+        json known_allergens
+        datetime updated_at
+    }
+    history_scanhistory {
+        int id PK
+        int user_id FK
+        string product_id
+        string name
+        string brand
+        string image_url
+        datetime scanned_at
+    }
 ```
 
-On macOS/Linux:
+### 📋 Table Schemas
 
-```bash
-cd backend
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-# Edit .env and set SECRET_KEY before continuing.
-python manage.py migrate
-python manage.py runserver 0.0.0.0:8000
+#### 1. Users Table (`nutriscan_user`)
+| Field | Type | Constraint / Description |
+|:---|:---|:---|
+| `id` | BigAutoField | **PK** |
+| `email` | EmailField | Unique credentials utilized for User Auth. |
+| `password` | CharField | Strongly hashed hash digest. |
+| `name` | CharField(150) | Required user preferred display string. |
+| `gender` | CharField(20) | Optional demographic discriminator. |
+| `dietary_restrictions` | CharField(500) | Delimited token list (`vegan,dairy-free`). |
+| `known_allergens` | JSONField | Native array structure storing sensitive health items. |
+| `updated_at` | DateTimeField | Auto-populated write stamp. |
+
+#### 2. Scan History Table (`history_scanhistory`)
+| Field | Type | Constraint / Description |
+|:---|:---|:---|
+| `id` | BigAutoField | **PK** |
+| `user_id` | ForeignKey | References User (Cascade deletes on account purge). |
+| `product_id` | CharField(100) | Stores external lookup keys (Barcodes). |
+| `name` | CharField(500) | Product title snapshot. |
+| `image_url` | URLField(1000) | Direct image cache pointer. |
+| `scanned_at` | DateTimeField | Write-enabled date marker. |
+
+> **Constraints enforced at database layer:** A Composite Unique Key exists on `(user_id, product_id)` ensuring user scan history always reflects update frequency without duplication.
+
+---
+
+## 📡 API Architecture & Endpoints
+
+Interaction flows entirely through explicit RESTful API transaction patterns secured by Header Tokens.
+
+### Map of Available Handlers
+```mermaid
+graph LR
+    subgraph "Auth Pipeline"
+        A1["POST /api/auth/register/"]
+        A2["POST /api/auth/login/"]
+        A3["GET/PUT /api/auth/profile/"]
+    end
+    subgraph "Product Pipeline"
+        P1["GET /api/products/search/"]
+        P2["GET /api/products/barcode/:id/"]
+        P3["POST /api/products/analyze-label/"]
+    end
+    subgraph "History Pipeline"
+        H1["GET /api/history/"]
+        H2["POST /api/history/"]
+        H3["DELETE /api/history/"]
+    end
 ```
 
-`backend/.env` is required because Django needs `SECRET_KEY`. Keep real values
-there for `SECRET_KEY`, `GOOGLE_API_KEY`, and production database settings.
-
-### Switching Databases
-
-Database selection is controlled by `backend/.env`; no code changes are needed.
-
-For local testing with SQLite:
-
-```env
-DB_MODE=sqlite
-# Optional. Leave blank to use backend/db.sqlite3.
-# SQLITE_NAME=
+#### Highlighted Data Structures
+The system utilizes a standard **Normalized Product Schema** resulting from aggregated backend parsing:
+```json
+{
+  "id": "8901058002157",
+  "name": "Dark Chocolate",
+  "brand": "BrandName",
+  "allergens": ["milk", "nuts"],
+  "nutriscore_grade": "c",
+  "nutrients_100g": {
+     "energy_kcal": 520.5,
+     "proteins": 8.2,
+     "fat": 31.4
+  }
+}
 ```
 
-Then run:
+---
 
-```bash
-python manage.py migrate
-python manage.py runserver 0.0.0.0:8000
-```
+## 🔗 Networking: How The Stack Connects
 
-For a cloud PostgreSQL database, use `DB_MODE=cloud`. If your provider gives a
-single connection string, prefer `DATABASE_URL`:
+### Development Handshake (Automatic Detection)
+1. Expo’s Metro Server boots locally (ex: `192.168.1.5:8081`).
+2. The mobile client queries the Metro configuration to retrieve its parent LAN IP address automatically.
+3. `constants/config.ts` redirects backend traffic directly to the exact same IP on port `:8000`.
+4. **Result**: No IP editing required when switching wifi networks.
 
-```env
-DB_MODE=cloud
-DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DB_NAME
-DB_SSL_REQUIRE=True
-```
+### Cross-Origin Resource Sharing (CORS)
+- **Local Mode (`DEBUG=True`)**: Backend universally accepts connections to streamline simulator testing across virtual hardware bridges.
+- **Production Mode (`DEBUG=False`)**: Tight whitelist is strictly enforced via `.env` variable `FRONTEND_URL`.
 
-If your provider gives separate fields instead, leave `DATABASE_URL` blank and
-set the individual variables:
+---
 
-```env
-DB_MODE=cloud
-DATABASE_URL=
-DB_ENGINE=django.db.backends.postgresql
-DB_NAME=app_db
-DB_USER=app_user
-DB_PASSWORD=your-cloud-password
-DB_HOST=db.example.com
-DB_PORT=5432
-DB_SSL_REQUIRE=True
-```
-
-After switching database modes, run migrations against the selected database:
-
-```bash
-python manage.py migrate
-```
-
-Keep cloud credentials only in `backend/.env`, deployment environment variables,
-or CI secrets. Do not commit real database URLs or passwords.
-
-## Frontend
-
-```powershell
-cd FRONTEND
-npm install
-npm start
-```
-
-The app auto-detects the Expo Metro host and points API calls to the Django
-server on port `8000`. If that fails on a specific network, copy
-`FRONTEND/.env.example` to `FRONTEND/.env` and set:
-
-```env
-EXPO_PUBLIC_DEV_API_URL=http://YOUR_MACHINE_IP:8000
-```
-
-For production builds, set `EXPO_PUBLIC_API_URL` through your local
-`FRONTEND/.env`, EAS environment variables, or CI secrets.
-
-## Codebase Guide
-
-The project is split into two main applications:
-
-- `backend/` - Django REST API, authentication, product lookup, AI analysis, and scan history.
-- `FRONTEND/` - Expo React Native app for login, search, scanning, product detail, profile, and history UI.
-
-### Backend Structure
-
-`backend/manage.py` is Django's command-line entry point. Use it for migrations,
-tests, local server startup, and project checks.
-
-`backend/requirements.txt` lists Python dependencies used by the API. Important
-packages include Django, Django REST Framework, token auth, CORS headers,
-python-decouple for `.env` loading, requests, and Google GenAI.
-
-`backend/.env.example` documents the environment variables the backend expects.
-Real values belong in `backend/.env`, which is ignored by git.
-
-`backend/nutriscan/` is the Django project configuration:
-
-- `settings.py` loads environment variables, configures apps, database, auth,
-  REST framework, CORS, static files, and password validation.
-- `urls.py` mounts the API modules under `/api/auth/`, `/api/products/`, and
-  `/api/history/`.
-- `asgi.py` and `wsgi.py` expose the app for ASGI/WSGI servers.
-- `nutriscan/settings.py` inside the nested folder is only a compatibility
-  wrapper so stale imports still reach the active settings module.
-
-`backend/users/` owns account and profile behavior:
-
-- `models.py` defines the custom `User` model. Email is the login identifier,
-  and profile fields include demographics, health goals, dietary restrictions,
-  and allergens.
-- `serializers.py` converts user models to/from API JSON and handles account
-  creation.
-- `views.py` implements register, login, logout, and profile endpoints.
-- `urls.py` maps auth routes.
-- `migrations/` stores database schema changes for the user model.
-- `tests.py` covers register, login, profile, duplicate email, and logout token
-  invalidation.
-
-`backend/products/` owns product search, barcode lookup, and AI analysis:
-
-- `views.py` exposes product endpoints. It calls Open Food Facts for search and
-  barcode data, normalizes external responses, and delegates image analysis to
-  `ai_service.py`.
-- `ai_service.py` wraps Gemini setup and calls. The client is created lazily so
-  the backend can start even when AI credentials are not configured.
-- `prompts.py` stores prompt templates for label analysis, barcode extraction,
-  and AI fallback search.
-- `urls.py` maps product routes.
-- `tests.py` covers barcode lookup and barcode-image analysis behavior.
-
-`backend/history/` owns the user's scan history:
-
-- `models.py` defines `ScanHistory`, one product entry per user/product pair.
-- `serializers.py` shapes history entries for API responses.
-- `views.py` implements list, add/update, clear-all, and delete-one endpoints.
-- `urls.py` maps history routes.
-- `tests.py` covers add, update, list, and clear behavior.
-
-### Frontend Structure
-
-`FRONTEND/package.json` defines the Expo scripts and JavaScript dependencies.
-Use `npm start` for Metro, `npm run android` for Android, and `npm run web` for
-the web build.
-
-`FRONTEND/.env.example` documents public Expo environment variables. Real local
-values belong in `FRONTEND/.env`, and production values should come from EAS or
-CI secrets.
-
-`FRONTEND/app/` contains Expo Router screens:
-
-- `_layout.tsx` wires the root providers, auth guard, stack navigation, and
-  status bar.
-- `index.tsx` is the splash screen. It waits for auth restore and redirects to
-  login or tabs.
-- `login.tsx` and `register.tsx` call auth context methods and show auth forms.
-- `scan.tsx` handles camera permission, barcode scanning, gallery picking,
-  ingredient-label capture, AI analysis, and search suggestions.
-- `product-detail.tsx` displays the selected product and writes it to history.
-- `error-screen.tsx` is the fallback/error UI.
-- `app/(tabs)/` contains the authenticated tab screens: home/search/history,
-  scan tab routing, and profile.
-
-`FRONTEND/constants/` contains shared app state and API configuration:
-
-- `config.ts` resolves the backend base URL. In development it auto-detects the
-  Expo host or uses `EXPO_PUBLIC_DEV_API_URL`; in production it uses
-  `EXPO_PUBLIC_API_URL`.
-- `api.ts` is the HTTP client layer. It stores/clears auth tokens, adds token
-  headers, handles JSON parsing, timeout behavior, and exposes Auth, Products,
-  and History API wrappers.
-- `AuthContext.tsx` owns logged-in user state, session restore, login,
-  registration, and logout.
-- `ProductContext.tsx` stores the currently selected product between screens.
-- `ThemeContext.tsx` and `Colors.ts` provide app colors/theme state.
-
-`FRONTEND/components/` contains reusable UI:
-
-- `SearchBar.tsx` is the shared controlled search input.
-- `ProductCard.tsx` renders product rows in search results and suggestions.
-- `NutriScoreBadge.tsx` renders Nutri-Score labels.
-- `EmptyState.tsx` renders reusable empty/placeholder states.
-- `LogoBranding.tsx` renders app branding.
-
-`FRONTEND/hooks/` contains reusable screen logic:
-
-- `useSearch.ts` handles product search state, debouncing, pagination, and
-  fallback searches.
-- `useHistory.ts` loads scan history, clears history, and reopens history items.
-
-`FRONTEND/utils/productMapper.ts` converts backend `NormalizedProduct` objects
-from `api.ts` into the frontend `ProductData` shape used by `ProductContext` and
-the detail screen.
-
-`FRONTEND/assets/` stores app icons, splash images, and other bundled assets.
-
-`FRONTEND/android/` is generated native Android project configuration for Expo
-prebuild/native runs. Most feature work should happen in `app/`, `components/`,
-`constants/`, `hooks/`, and `utils/`.
-
-### How The Pieces Interact
-
-Authentication flow:
-
-1. The login/register screens call `AuthContext`.
-2. `AuthContext` calls `AuthAPI` in `constants/api.ts`.
-3. `AuthAPI` sends requests to Django `/api/auth/...` routes.
-4. `backend/users/views.py` validates credentials, creates or fetches a DRF
-   token, and returns the token plus serialized user profile.
-5. The frontend stores the token in AsyncStorage and attaches it to future API
-   requests as `Authorization: Token <token>`.
-
-Product search flow:
-
-1. Home or scan search UI calls `useSearch` or `ProductsAPI.search`.
-2. `api.ts` sends `GET /api/products/search/`.
-3. `backend/products/views.py` calls Open Food Facts, normalizes product data,
-   and returns a list of `NormalizedProduct` objects.
-4. The frontend renders those with `ProductCard`.
-5. When a product is selected, `productMapper.ts` maps it into `ProductData`,
-   `ProductContext` stores it, and `product-detail.tsx` displays it.
-
-Barcode/camera flow:
-
-1. `scan.tsx` uses `expo-camera` for live barcode scanning or captures/picks an
-   image.
-2. For a live barcode, the app calls `ProductsAPI.byBarcode`, which reaches
-   `/api/products/barcode/<code>/`.
-3. For a barcode image or ingredient label, the app calls the AI analysis
-   endpoints.
-4. `backend/products/ai_service.py` uses Gemini when `GOOGLE_API_KEY` is
-   configured.
-5. Returned product data is normalized and shown in `product-detail.tsx`.
-
-History flow:
-
-1. `product-detail.tsx` calls `HistoryAPI.add` when a product is opened.
-2. `backend/history/views.py` creates or refreshes the user's history row.
-3. Home uses `useHistory` to load `/api/history/`, display recent products, and
-   reopen them through `ProductsAPI.byBarcode` when possible.
-
-## Portable Files
-
-Do not commit generated machine-local folders or secrets:
-
+## 📂 Portable Files Warning
+Ensure the following sensitive or auto-generated elements NEVER enter source control tracking:
 - `backend/venv/`
 - `FRONTEND/node_modules/`
 - `backend/.env`
-- `FRONTEND/.env`
 - `backend/db.sqlite3`
+- `FRONTEND/.env`
+
+*(Refer to `.gitignore` mappings for details.)*
+
+---
+**Ingrevia Application User Manual V1.0**  
+
