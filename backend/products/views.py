@@ -178,6 +178,8 @@ def analyze_label(request):
         result = ai_service.analyze_label_image(image_data, product_name)
         return Response(result)
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return Response({'error': f'AI analysis failed: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -201,4 +203,6 @@ def analyze_barcode(request):
             return error_response
         return Response(product)
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return Response({'error': f'Barcode analysis failed: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
